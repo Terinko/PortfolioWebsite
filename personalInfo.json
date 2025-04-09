@@ -1,0 +1,7 @@
+{
+    "sectionTitle": "projects",
+    "projects": [
+        {"projTitle":"John", "dateComplete":"Doe"},
+        {"projTitle":"John", "dateComplete":"Doe"}
+    ]
+}
