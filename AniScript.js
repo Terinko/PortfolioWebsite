@@ -51,7 +51,7 @@ function animate({ timing, draw, duration }) {
       if(document.getElementById("nameHeader") != null) {
         document.getElementById("nameHeader").remove();
       }
-      window.location.replace("http://127.0.0.1:5500/mainPage.html");
+      window.location.replace("mainPage.html");
     }
   });
 }
