@@ -168,7 +168,7 @@ function directDetails() {
             infoDiv.className = 'infoDiv';
             infoDiv.id = 'infoDiv';
             document.getElementById('container').appendChild(infoDiv);
-            textItem.innerHTML = 'Tyler\'s newest contacts';
+            textItem.innerHTML = 'Phone: (603)-507-2084 \n Email: rinkotyler@gmail.com';
             document.getElementById('infoDiv').appendChild(textItem); 
 
             break;
