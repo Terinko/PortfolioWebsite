@@ -1,8 +1,34 @@
-async function printJSON() {
-    const response = await fetch("personalInfo.json");
-    const json = await response.json();
-    console.log(json);
+let personalInfoData = {};
+
+// 1. Fetch personalInfo.json
+async function loadPersonalInfo() {
+  try {
+    const res = await fetch("personalInfo.json");
+    personalInfoData = await res.json();
+  } catch (err) {
+    console.error("Failed to load personalInfo.json:", err);
+  }
 }
+
+// 2. Initialize page after JSON is loaded
+async function initPage() {
+  await loadPersonalInfo();
+  placeSvgRandomly();
+  createProds();
+  renderSection();
+}
+
+window.addEventListener("DOMContentLoaded", initPage);
+
+let resizeTimeout;
+
+window.addEventListener('resize', function() {
+  if (resizeTimeout) clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(function() {
+    document.querySelectorAll('.backgroundDot').forEach(dot => dot.remove());
+    placeSvgRandomly();
+  }, 250);
+});
 
 function getCircle(x, y, transitionSpeed){
     const initialOpacity = (Math.random() * 0.6 + 0.2).toFixed(2);
@@ -14,13 +40,20 @@ function getCircle(x, y, transitionSpeed){
     `
 }
 
-function placeMultipleCircles(count){
+function placeMultipleCircles(count) {
     const container = document.getElementById('container');
     const containerRect = container.getBoundingClientRect();
     
+    // Calculate actual available space
+    // Subtract circle radius (2px) * 2 to ensure circle stays fully within bounds
+    const availableWidth = containerRect.width - 15; // SVG width is 15px
+    const availableHeight = containerRect.height - 15; // SVG height is 15px
+    
     for(let i = 0; i < count; i++) {
-        const randomX = 35 + Math.floor(Math.random() * (containerRect.width - 20));
-        const randomY = 20 + Math.floor(Math.random() * (containerRect.height - 15));
+        // Calculate position relative to container
+        const randomX = Math.floor(Math.random() * availableWidth);
+        const randomY = Math.floor(Math.random() * availableHeight);
+        
         let transitionSpeed;
         if (i < count * 0.7) {
             transitionSpeed = (Math.random() * 0.5 + 0.1).toFixed(2); // Fast: 0.1-0.8s
@@ -35,7 +68,6 @@ function placeMultipleCircles(count){
         dot.classList = "backgroundDot";
         dot.id = `dot-${i}`;
         container.appendChild(dot);
-        
     }
     
     animateDotsOpacity();
@@ -71,109 +103,60 @@ function placeSvgRandomly() {
 let lastClicked = null;
 
 function handleMenuClick(e) {
-    const clickedElement = e.currentTarget;
-
-    // If a different button was previously clicked, show it again
-    if (lastClicked && lastClicked !== clickedElement) {
-        lastClicked.style.display = "block";
-    }
-
-    // Hide the clicked button
-    clickedElement.style.display = "none";
-
-    // Update the lastClicked reference
-    lastClicked = clickedElement;
-
-    console.log("Last clicked element:", lastClicked?.id);
-
-    directDetails();
+  const clicked = e.currentTarget;
+  if (lastClicked && lastClicked !== clicked) lastClicked.style.display = "block";
+  clicked.style.display = "none";
+  lastClicked = clicked;
+  renderSection();
 }
 
-function createProds(){
-    const elements = document.getElementsByClassName("menuItem");
-
-    if (elements.length > 0) {
-        //Default first menu item to be "off"
-        elements[0].style.display = "none";
-        lastClicked = elements[0];
-    }
-
-    for (let i = 0; i < elements.length; i++) {
-        elements[i].addEventListener('click', handleMenuClick);
-    }
+function createProds() {
+  const items = document.getElementsByClassName("menuItem");
+  if (items.length > 0) {
+    items[0].style.display = "none";
+    lastClicked = items[0];
+  }
+  Array.from(items).forEach(item => item.addEventListener('click', handleMenuClick));
 }
 
-function directDetails() {
+function renderSection() {
+  const section = lastClicked.id;
+  const old = document.getElementById('infoDiv');
+  if (old) old.remove();
 
-    const infoDiv = document.createElement('div');
-    const textItem = document.createElement('h3');
-    textItem.className = 'textItem';
+  const infoDiv = document.createElement('div');
+  infoDiv.id = 'infoDiv';
+  infoDiv.className = 'infoDiv';
+  document.getElementById('container').appendChild(infoDiv);
 
-    switch (lastClicked.id) {
-        case "projects":
-            console.log("Projects section triggered.");
-            if( document.getElementById('infoDiv') != null){
-                document.getElementById('infoDiv').remove();
-            }
+  const data = personalInfoData[section];
+  if (!data) {
+    console.warn(`No data for section "${section}"`);
+    return;
+  }
 
-            // Add logic to show project details
-            //Adds div for section info
-            infoDiv.className = 'infoDiv';
-            infoDiv.id = 'infoDiv';
-            document.getElementById('container').appendChild(infoDiv);
-            textItem.innerHTML = 'Tyler\'s newest project';
-            document.getElementById('infoDiv').appendChild(textItem); 
+  if (section === "projects" && Array.isArray(data)) {
+    data.forEach(proj => {
+      const card = document.createElement('div');
+      card.className = 'project';
+      const title = document.createElement('h4');
+      title.textContent = proj.projTitle;
+      const date = document.createElement('p');
+      date.textContent = proj.dateComplete;
+      card.append(title, date);
+      infoDiv.appendChild(card);
+    });
 
-            break;
-        case "info":
-            console.log("Info section triggered.");
-            if( document.getElementById('infoDiv') != null){
-                document.getElementById('infoDiv').remove();
-            }
-            // Add logic to show info details
-            //Adds div for section info
-            infoDiv.className = 'infoDiv';
-            infoDiv.id = 'infoDiv';
-            document.getElementById('container').appendChild(infoDiv);
-            textItem.innerHTML = 'Tyler\'s newest info';
-            document.getElementById('infoDiv').appendChild(textItem); 
- 
-            break;
-        case "about":
-            console.log("About section triggered.");
-            if( document.getElementById('infoDiv') != null){
-                document.getElementById('infoDiv').remove();
-            }
-            // Add logic to show info details
-            //Adds div for section info
-            infoDiv.className = 'infoDiv';
-            infoDiv.id = 'infoDiv';
-            document.getElementById('container').appendChild(infoDiv);
-            textItem.innerHTML = 'Welcome to my website!  My name is Tyler and I am an aspiring software developer from ' 
-            + 'Quinnipiac University.  Here I study software engineering on a path to graduate in 2026.  After that, I plan '
-            + 'on furthering my education by attaining my master\'s degree in cybersecurity in 2027.  '
-            + 'While I am always eager and open to learning new subsets of this field, my primary interest lies in web '
-            + 'development.  I have also done some deep dives into the emerging field of artificial intelligence which should '
-            + 'be evidenced by my projects section.  Thank you for taking the time to check out my website and enjoy!';
-            document.getElementById('infoDiv').appendChild(textItem); 
- 
-            break;
-        case "contact":
-            console.log("Contact section triggered.");
-            if( document.getElementById('infoDiv') != null){
-                document.getElementById('infoDiv').remove();
-            }
-            // Add logic to show info details
-            //Adds div for section info
-            infoDiv.className = 'infoDiv';
-            infoDiv.id = 'infoDiv';
-            document.getElementById('container').appendChild(infoDiv);
-            textItem.innerHTML = 'Phone: (603)-507-2084 \n Email: rinkotyler@gmail.com';
-            document.getElementById('infoDiv').appendChild(textItem); 
+  } else if (section === "contact" && typeof data === 'object') {
+    const text = document.createElement('h3');
+    text.className = 'textItem';
+    text.innerHTML = `Phone: ${data.phone}  Email: ${data.email}`;
+    infoDiv.appendChild(text);
 
-            break;
-        default:
-            document.getElementById('infoDiv').remove();
-            console.log("Home section showing");
-    }
+  } else {
+    const text = document.createElement('h3');
+    text.className = 'textItem';
+    text.innerHTML = data;
+    infoDiv.appendChild(text);
+  }
 }
